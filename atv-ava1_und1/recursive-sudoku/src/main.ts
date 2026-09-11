@@ -1,5 +1,7 @@
 import "./style.css";
 
+import { iniciarMenu } from "./menu/menu";
+
 import type { Tabuleiro } from "./types";
 import { movimentoValido } from "./sudoku";
 import { resolverSudoku } from "./solver";

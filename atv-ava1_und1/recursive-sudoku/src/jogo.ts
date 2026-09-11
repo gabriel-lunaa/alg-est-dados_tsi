@@ -2,81 +2,10 @@ import "./style.css";
 
 import type { Tabuleiro } from "./types";
 import { movimentoValido } from "./sudoku";
-import { resolverSudoku, gerarTabuleiroSudoku } from "./solver";
+import { gerarTabuleiroSudoku } from "./solver";
+import { iniciarCronometro, pararCronometro } from "./jogo/cronometro";
+import { estadoJogo } from "./jogo/estado";
 
-
-let acertos = 0;
-let erros = 0;
-
-let tempoInicio = 0;
-let tempoPausado = 0;
-let cronometro: number | undefined;
-
-const linhasComemoradas = new Set<number>();
-const colunasComemoradas = new Set<number>();
-const blocosComemorados = new Set<string>();
-
-let sudokuConcluido = false;
-let ultimaLinhaPreenchida = -1;
-let ultimaColunaPreenchida = -1;
-
-//Função do Cronômetro
-function formatarTempo(segundos: number): string {
-
-    const minutos = Math.floor(segundos / 60);
-
-    const segundosRestantes = segundos % 60;
-
-    return `${minutos.toString().padStart(2, "0")}:${segundosRestantes
-        .toString()
-        .padStart(2, "0")}`;
-}
-
-function iniciarCronometro(): void {
-
-    tempoInicio = Date.now();
-
-    cronometro = window.setInterval(() => {
-
-        const tempoDecorrido =
-            tempoPausado +
-            Math.floor(
-                (Date.now() - tempoInicio) / 1000
-            );
-
-        const elementoTempo =
-            document.querySelector<HTMLElement>(
-                "#tempo"
-            );
-
-        if (elementoTempo) {
-
-            elementoTempo.textContent =
-                formatarTempo(tempoDecorrido);
-        }
-
-    }, 1000);
-}
-
-function pararCronometro(
-    acumularTempo = true
-): void {
-
-    if (cronometro !== undefined) {
-
-        if (acumularTempo) {
-
-            tempoPausado +=
-                Math.floor(
-                    (Date.now() - tempoInicio) / 1000
-                );
-        }
-
-        clearInterval(cronometro);
-
-        cronometro = undefined;
-    }
-}
 
 function verificarConclusao(): void {
 
@@ -91,11 +20,11 @@ function verificarConclusao(): void {
         }
     }
 
-    if (sudokuConcluido) {
+    if (estadoJogo.sudokuConcluido) {
         return;
     }
 
-    sudokuConcluido = true;
+    estadoJogo.sudokuConcluido = true;
 
     pararCronometro();
 
@@ -132,10 +61,10 @@ function verificarConclusao(): void {
             );
 
         const origemLinha =
-            ultimaLinhaPreenchida;
+            estadoJogo.ultimaLinhaPreenchida;
 
         const origemColuna =
-            ultimaColunaPreenchida;
+            estadoJogo.ultimaColunaPreenchida;
 
         celulas.forEach((celula) => {
 
@@ -177,7 +106,7 @@ function verificarConclusao(): void {
     //LINHAS
     for (let linha = 0; linha < 9; linha++) {
 
-        if (linhasComemoradas.has(linha)) {
+        if (estadoJogo.linhasComemoradas.has(linha)) {
             continue;
         }
 
@@ -188,7 +117,7 @@ function verificarConclusao(): void {
 
         if (linhaCompleta) {
 
-            linhasComemoradas.add(linha);
+            estadoJogo.linhasComemoradas.add(linha);
 
             animarLinha(linha);
         }
@@ -197,7 +126,7 @@ function verificarConclusao(): void {
     //COLUNAS
     for (let coluna = 0; coluna < 9; coluna++) {
 
-        if (colunasComemoradas.has(coluna)) {
+        if (estadoJogo.colunasComemoradas.has(coluna)) {
             continue;
         }
 
@@ -215,7 +144,7 @@ function verificarConclusao(): void {
 
         if (completa) {
 
-            colunasComemoradas.add(coluna);
+            estadoJogo.colunasComemoradas.add(coluna);
 
             animarColuna(coluna);
         }
@@ -229,7 +158,7 @@ function verificarConclusao(): void {
             const chave =
                 `${blocoLinha}-${blocoColuna}`;
 
-            if (blocosComemorados.has(chave)) {
+            if (estadoJogo.blocosComemorados.has(chave)) {
                 continue;
             }
 
@@ -258,7 +187,7 @@ function verificarConclusao(): void {
 
             if (completo) {
 
-                blocosComemorados.add(chave);
+                estadoJogo.blocosComemorados.add(chave);
 
                 animarBloco(
                     blocoLinha,
@@ -839,8 +768,8 @@ if (aplicativo) {
                                 tabuleiro[linha][coluna] =
                                     numero;
 
-                                ultimaLinhaPreenchida = linha;
-                                ultimaColunaPreenchida = coluna;
+                                estadoJogo.ultimaLinhaPreenchida = linha;
+                                estadoJogo.ultimaColunaPreenchida = coluna;
 
                                 entrada.classList.remove(
                                     "entrada-invalida"
@@ -850,7 +779,7 @@ if (aplicativo) {
                                     "entrada-valida"
                                 );
 
-                                acertos++;
+                                estadoJogo.acertos++;
 
                                 const elementoAcertos =
                                     document.querySelector<HTMLElement>(
@@ -860,7 +789,7 @@ if (aplicativo) {
                                 if (elementoAcertos) {
 
                                     elementoAcertos.textContent =
-                                        acertos.toString();
+                                        estadoJogo.acertos.toString();
 
                                 }
 
@@ -882,7 +811,7 @@ if (aplicativo) {
                                 // dentro do tabuleiro.
                                 tabuleiro[linha][coluna] = 0;
 
-                                erros++;
+                                estadoJogo.erros++;
 
                                 const elementoErros =
                                     document.querySelector<HTMLElement>(
@@ -892,7 +821,7 @@ if (aplicativo) {
                                 if (elementoErros) {
 
                                     elementoErros.textContent =
-                                        erros.toString();
+                                        estadoJogo.erros.toString();
 
                                 }
 
