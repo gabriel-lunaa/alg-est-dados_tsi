@@ -13,6 +13,16 @@ export class Mapa {
         this.quantidadePontos++;
     }
 
+    public buscarPontoPorId(id: number): PontoMapa | null {
+        for (let indice = 0; indice < this.quantidadePontos; indice++) {
+            if (this.pontos[indice].id === id) {
+                return this.pontos[indice];
+            }
+        }
+
+        return null;
+    }
+
     public adicionarConexao(conexao: Conexao): void {
         this.conexoes[this.quantidadeConexoes] = conexao;
         this.quantidadeConexoes++;
