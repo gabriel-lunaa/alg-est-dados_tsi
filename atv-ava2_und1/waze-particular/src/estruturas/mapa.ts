@@ -23,6 +23,19 @@ export class Mapa {
         return null;
     }
 
+    public buscarPontoPorPosicao(x: number, y: number): PontoMapa | null {
+        for (let indice = 0; indice < this.quantidadePontos; indice++) {
+            if (
+                this.pontos[indice].posicao.x === x &&
+                this.pontos[indice].posicao.y === y
+            ) {
+                return this.pontos[indice];
+            }
+        }
+
+        return null;
+    }
+
     public adicionarConexao(conexao: Conexao): void {
         this.conexoes[this.quantidadeConexoes] = conexao;
         this.quantidadeConexoes++;
