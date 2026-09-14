@@ -1,5 +1,5 @@
 import type { PontoMapa } from "../tipos/pontoMapa";
-import type { Conexao } from "../tipos/conexao";
+import type { Conexao, NivelTransito } from "../tipos/conexao";
 
 export class Mapa {
     private pontos: PontoMapa[] = [];
@@ -39,6 +39,22 @@ export class Mapa {
     public adicionarConexao(conexao: Conexao): void {
         this.conexoes[this.quantidadeConexoes] = conexao;
         this.quantidadeConexoes++;
+    }
+
+    public alterarTransitoConexao(
+        indiceConexao: number,
+        nivelTransito: NivelTransito
+    ): boolean {
+        if (
+            indiceConexao < 0 ||
+            indiceConexao >= this.quantidadeConexoes
+        ) {
+            return false;
+        }
+
+        this.conexoes[indiceConexao].nivelTransito = nivelTransito;
+
+        return true;
     }
 
     public obterPonto(indice: number): PontoMapa {

@@ -1,5 +1,6 @@
 import type { Mapa } from "../estruturas/mapa";
 import type { PontoMapa } from "../tipos/pontoMapa";
+import type { NivelTransito } from "../tipos/conexao";
 
 export class MenorDistancia {
     public calcular(
@@ -104,9 +105,15 @@ export class MenorDistancia {
                     continue;
                 }
 
+                const fatorTransito = this.obterFatorTransito(
+                    conexao.nivelTransito
+                );
+
+                const custoConexao = conexao.distancia * fatorTransito;
+
                 const novaDistancia =
                     distancias[indiceMenorDistancia] +
-                    conexao.distancia;
+                    custoConexao;
 
                 if (novaDistancia < distancias[indiceVizinho]) {
                     distancias[indiceVizinho] = novaDistancia;
@@ -169,5 +176,17 @@ export class MenorDistancia {
         }
 
         return caminho;
+    }
+
+    private obterFatorTransito(nivelTransito: NivelTransito): number {
+        if (nivelTransito === "livre") {
+            return 1;
+        }
+
+        if (nivelTransito === "moderado") {
+            return 1.5;
+        }
+
+        return 3;
     }
 }
