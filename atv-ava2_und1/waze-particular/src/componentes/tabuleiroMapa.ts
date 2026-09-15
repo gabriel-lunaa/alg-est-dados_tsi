@@ -89,12 +89,12 @@ export function criarTabuleiroVisual(
             }
 
             if (celula.tipo === "casa") {
-                elementoCelula.className =
+                elementoCelula.className +=
                     " rounded-md bg-slate-100 ring-1 ring-slate-200";
             }
 
             if (celula.tipo === "predio") {
-                elementoCelula.className =
+                elementoCelula.className +=
                     " rounded-md bg-slate-200 ring-1 ring-slate-300";
             }
 
@@ -104,8 +104,36 @@ export function criarTabuleiroVisual(
             }
 
             if (celula.tipo === "estabelecimento") {
-                elementoCelula.className =
+                elementoCelula.className +=
                     " rounded-md bg-[#989ea3] ring-1 ring-[#7f858a]";
+            }
+
+            const desenhoCelula: Record<
+                string,
+                { simbolo: string; cor: string }
+            > = {
+                vazio: { simbolo: "", cor: "" },
+                terreno: { simbolo: "·", cor: "text-amber-500/60" },
+                rua: { simbolo: "", cor: "" },
+                casa: { simbolo: "⌂", cor: "text-orange-600" },
+                predio: { simbolo: "▥", cor: "text-indigo-600" },
+                praca: { simbolo: "✿", cor: "text-emerald-600" },
+                estabelecimento: { simbolo: "▣", cor: "text-slate-100" }
+            };
+
+            const desenho = desenhoCelula[celula.tipo];
+
+            if (desenho.simbolo !== "") {
+                const elementoDesenho =
+                    document.createElement("span");
+
+                elementoDesenho.className =
+                    `pointer-events-none absolute inset-0 flex items-center justify-center text-xl font-black leading-none ${desenho.cor}`;
+                elementoDesenho.textContent = desenho.simbolo;
+
+                elementoCelula.appendChild(
+                    elementoDesenho
+                );
             }
 
             /*
@@ -143,7 +171,7 @@ export function criarTabuleiroVisual(
                 origem.y === y
             ) {
                 elementoCelula.className +=
-                    " bg-green-500 ring-2 ring-green-700";
+                    " !bg-green-500 ring-2 ring-green-700";
 
                 const indicadorOrigem =
                     document.createElement("span");
@@ -168,7 +196,7 @@ export function criarTabuleiroVisual(
                 destino.y === y
             ) {
                 elementoCelula.className +=
-                    " bg-red-500 ring-2 ring-red-700";
+                    " !bg-red-500 ring-2 ring-red-700";
 
                 const indicadorDestino =
                     document.createElement("span");

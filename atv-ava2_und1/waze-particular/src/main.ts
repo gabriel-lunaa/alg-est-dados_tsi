@@ -2,7 +2,6 @@ import { criarMapaDemonstracao } from "./mapas/mapaDemonstracao";
 import { MenorDistancia } from "./algoritmos/menorDistancia";
 import { GeradorTransitoAleatorio } from "./algoritmos/geradorTransitoAleatorio";
 import { criarTabuleiroVisual } from "./componentes/tabuleiroMapa";
-import { BuscaEmLargura } from "./algoritmos/buscaEmLargura";
 import { MenuLateral } from "./componentes/menuLateral";
 import { EditorCidade } from "./componentes/editorCidade";
 import { TabuleiroMapa } from "./estruturas/tabuleiroMapa";
@@ -14,29 +13,6 @@ const mapa = criarMapaDemonstracao();
 
 const tabuleiro = mapa.obterTabuleiro();
 
-if (tabuleiro !== null) {
-    const buscaEmLargura =
-        new BuscaEmLargura();
-
-    const caminho =
-        buscaEmLargura.encontrarCaminho(
-            tabuleiro,
-            {
-                x: 3,
-                y: 2
-            },
-            {
-                x: 14,
-                y: 10
-            }
-        );
-
-    console.log(
-        "Caminho encontrado pela BFS:",
-        caminho
-    );
-}
-
 if (tabuleiro === null) {
     console.error("Tabuleiro do mapa não encontrado.");
 }
@@ -47,16 +23,6 @@ const destino = mapa.buscarPontoPorId(4);
 if (origem === null || destino === null) {
     console.error("Origem ou destino não encontrados no mapa.");
 }
-
-const posicaoOrigem: Posicao = {
-    x: 3,
-    y: 2
-};
-
-const posicaoDestino: Posicao = {
-    x: 14,
-    y: 10
-};
 
 let origemSelecionada: Posicao | null = null;
 let destinoSelecionado: Posicao | null = null;
@@ -86,20 +52,12 @@ function selecionarCelula(
             y: y
         };
 
-        console.log(
-            "Origem selecionada:",
-            origemSelecionada
-        );
     } else if (destinoSelecionado === null) {
         destinoSelecionado = {
             x: x,
             y: y
         };
 
-        console.log(
-            "Destino selecionado:",
-            destinoSelecionado
-        );
     } else {
         return;
     }
@@ -131,7 +89,7 @@ function atualizarTabuleiroVisual(): void {
     );
 
     menuLateral.iniciar(
-        areaTabuleiro,
+        areaMenu!,
         tratarOpcaoMenu
     );
 }
@@ -152,19 +110,23 @@ if (tabuleiro !== null) {
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <main class="min-h-screen bg-slate-100 text-slate-900">
-        <header class="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-6 py-5">
-            <div class="rounded-2xl bg-white/95 px-5 py-3 shadow-lg backdrop-blur">
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">
-                    Waze Particular
-                </h1>
-                <p class="text-xs text-slate-500">
-                    Seu navegador de rotas
-                </p>
+        <header class="absolute left-0 right-0 top-0 z-20 flex items-center justify-end px-6 py-5">
+            <div class="flex items-center gap-3">
+                <div class="rounded-2xl bg-white/95 px-5 py-3 shadow-lg backdrop-blur">
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900">
+                        Waze Particular
+                    </h1>
+                    <p class="text-xs text-slate-500">
+                        Seu navegador de rotas
+                    </p>
+                </div>
+
+                <div id="area-menu" class="relative h-12 w-12"></div>
             </div>
 
         </header>
 
-<<section class="flex min-h-screen items-center justify-center overflow-hidden px-6 pb-8 pt-28">
+<section class="flex min-h-screen items-center justify-center overflow-hidden px-6 pb-8 pt-20">
     <div class="flex w-full max-w-7xl items-center justify-center gap-8">
 
     <div
@@ -194,7 +156,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                         </p>
 
                         <p class="truncate text-sm font-semibold text-slate-700">
-                            Praça Central
+                            Ponto A
                         </p>
                     </div>
                 </div>
@@ -208,7 +170,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                         </p>
 
                         <p class="truncate text-sm font-semibold text-slate-700">
-                            Hospital
+                            Ponto B
                         </p>
                     </div>
                 </div>
@@ -268,6 +230,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
 const areaTabuleiro =
     document.querySelector<HTMLDivElement>("#area-tabuleiro");
+const areaMenu =
+    document.querySelector<HTMLDivElement>("#area-menu");
 
 const menuLateral =
     new MenuLateral();
@@ -286,7 +250,7 @@ function mostrarMenuInicial(): void {
     }
 
     menuLateral.iniciar(
-        areaTabuleiro,
+        areaMenu!,
         tratarOpcaoMenu
     );
 }
@@ -313,7 +277,7 @@ function criarNovoMapa(): void {
     );
 
     menuLateral.iniciar(
-        areaTabuleiro,
+        areaMenu!,
         tratarOpcaoMenu
     );
 }
@@ -394,7 +358,7 @@ function abrirMapaSalvo(
     );
 
     menuLateral.iniciar(
-        areaTabuleiro,
+        areaMenu!,
         tratarOpcaoMenu
     );
 }
@@ -556,7 +520,7 @@ function selecionarMapa(): void {
     );
 
     menuLateral.iniciar(
-        areaTabuleiro,
+        areaMenu!,
         tratarOpcaoMenu
     );
 }
@@ -582,7 +546,7 @@ function tratarOpcaoMenu(
 }
 
 menuLateral.iniciar(
-    areaTabuleiro!,
+    areaMenu!,
     tratarOpcaoMenu
 );
 
@@ -592,15 +556,6 @@ if (areaTabuleiro !== null && elementoTabuleiro !== null) {
 
 const botaoCalcularRota =
     document.querySelector<HTMLButtonElement>("#botao-calcular-rota");
-
-const textoRota =
-    document.querySelector<HTMLSpanElement>("#texto-rota");
-
-const textoTransito =
-    document.querySelector<HTMLParagraphElement>("#texto-transito");
-
-const indicadorTransito =
-    document.querySelector<HTMLSpanElement>("#indicador-transito");
 
 botaoCalcularRota?.addEventListener("click", () => {
     if (tabuleiro === null) {
@@ -637,20 +592,10 @@ botaoCalcularRota?.addEventListener("click", () => {
             destinoSelecionado
         );
 
-   console.log(
-        "Caminho encontrado pelo Dijkstra:",
-        caminho
-    );
-
     if (caminho.length === 0) {
         console.error(
             "Nenhum caminho foi encontrado."
         );
-
-        if (textoRota !== null) {
-            textoRota.textContent =
-                "Nenhum caminho encontrado.";
-        }
 
         return;
     }
@@ -662,8 +607,8 @@ botaoCalcularRota?.addEventListener("click", () => {
             criarTabuleiroVisual(
                 tabuleiro,
                 caminho,
-                posicaoOrigem,
-                posicaoDestino
+                origemSelecionada,
+                destinoSelecionado
             );
 
         areaTabuleiro.appendChild(
@@ -671,19 +616,4 @@ botaoCalcularRota?.addEventListener("click", () => {
         );
     }
 
-    if (textoRota !== null) {
-        textoRota.textContent =
-            caminho.length +
-            " células no caminho";
-    }
-
-    if (indicadorTransito !== null) {
-        indicadorTransito.textContent =
-            "Calculado";
-    }
-
-    if (textoTransito !== null) {
-        textoTransito.textContent =
-            "Rota encontrada considerando o trânsito.";
-    }
 });

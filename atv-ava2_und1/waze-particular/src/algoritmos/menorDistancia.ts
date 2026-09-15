@@ -126,16 +126,6 @@ export class MenorDistancia {
                     posicaoAtual
                 );
 
-            if (
-                posicaoAtual.x === 3 &&
-                posicaoAtual.y === 2
-            ) {
-                console.log(
-                    "Vizinhos da origem:",
-                    vizinhos
-                );
-            }
-
             for (
                 let indiceVizinho = 0;
                 indiceVizinho < 4;

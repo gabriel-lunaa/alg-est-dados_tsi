@@ -5,6 +5,7 @@ export type OpcaoMenu =
 
 export class MenuLateral {
     private elementoMenu: HTMLDivElement | null = null;
+    private elementoFundo: HTMLDivElement | null = null;
 
     private aoSelecionar:
         ((opcao: OpcaoMenu) => void) | null = null;
@@ -15,6 +16,7 @@ export class MenuLateral {
             (opcao: OpcaoMenu) => void
     ): void {
         this.aoSelecionar = aoSelecionar;
+        area.innerHTML = "";
 
         const botaoMenu =
             document.createElement("button");
@@ -25,7 +27,7 @@ export class MenuLateral {
             "botao-menu-lateral";
 
         botaoMenu.className =
-            "absolute left-6 top-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-2xl text-slate-700 shadow-lg backdrop-blur transition hover:scale-105";
+            "absolute inset-0 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-2xl text-slate-700 shadow-lg backdrop-blur transition hover:scale-105";
 
         botaoMenu.textContent = "☰";
 
@@ -35,7 +37,20 @@ export class MenuLateral {
             document.createElement("div");
 
         this.elementoMenu.className =
-            "absolute left-0 top-0 z-50 h-full w-80 -translate-x-full bg-white shadow-2xl transition-transform duration-300 ease-out";
+            "fixed left-0 top-0 z-[70] h-full w-80 -translate-x-full bg-white shadow-2xl transition-transform duration-300 ease-out";
+
+        this.elementoFundo =
+            document.createElement("div");
+
+        this.elementoFundo.className =
+            "pointer-events-none fixed inset-0 z-[65] bg-slate-900/20 opacity-0 transition-opacity duration-300";
+
+        this.elementoFundo.addEventListener(
+            "click",
+            () => {
+                this.fechar();
+            }
+        );
 
         this.elementoMenu.innerHTML = `
             <div class="flex h-full flex-col">
@@ -124,9 +139,8 @@ export class MenuLateral {
             </div>
         `;
 
-        area.appendChild(
-            this.elementoMenu
-        );
+        area.appendChild(this.elementoFundo);
+        area.appendChild(this.elementoMenu);
 
         botaoMenu.addEventListener(
             "click",
@@ -200,6 +214,16 @@ export class MenuLateral {
         this.elementoMenu.classList.add(
             "translate-x-0"
         );
+
+        this.elementoFundo?.classList.remove(
+            "pointer-events-none",
+            "opacity-0"
+        );
+
+        this.elementoFundo?.classList.add(
+            "pointer-events-auto",
+            "opacity-100"
+        );
     }
 
     private fechar(): void {
@@ -215,6 +239,16 @@ export class MenuLateral {
 
         this.elementoMenu.classList.add(
             "-translate-x-full"
+        );
+
+        this.elementoFundo?.classList.remove(
+            "pointer-events-auto",
+            "opacity-100"
+        );
+
+        this.elementoFundo?.classList.add(
+            "pointer-events-none",
+            "opacity-0"
         );
     }
 
