@@ -259,9 +259,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                 </div>
             </div>
 
-            <div class="absolute left-[25%] top-[28%] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg ring-4 ring-white">
-                <span class="text-sm">A</span>
-            </div>
+            
 
             
         </section>
