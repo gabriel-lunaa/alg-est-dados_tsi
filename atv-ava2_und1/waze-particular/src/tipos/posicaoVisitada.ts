@@ -1,7 +1,7 @@
-import type { PontoMapa } from "./pontoMapa";
+import type { Posicao } from "./posicao";
 
 export interface PosicaoVisitada {
-    ponto: PontoMapa;
+    posicao: Posicao;
     visitada: boolean;
-    pontoAnterior: PontoMapa | null;
+    posicaoAnterior: Posicao | null;
 }

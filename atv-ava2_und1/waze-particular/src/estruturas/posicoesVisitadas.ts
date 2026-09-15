@@ -9,9 +9,19 @@ export class PosicoesVisitadas {
         this.quantidadePosicoes++;
     }
 
-    public estaVisitado(idPonto: number): boolean {
-        for (let indice = 0; indice < this.quantidadePosicoes; indice++) {
-            if (this.posicoes[indice].ponto.id === idPonto) {
+    public estaVisitado(
+        x: number,
+        y: number
+    ): boolean {
+        for (
+            let indice = 0;
+            indice < this.quantidadePosicoes;
+            indice++
+        ) {
+            if (
+                this.posicoes[indice].posicao.x === x &&
+                this.posicoes[indice].posicao.y === y
+            ) {
                 return this.posicoes[indice].visitada;
             }
         }
@@ -19,8 +29,24 @@ export class PosicoesVisitadas {
         return false;
     }
 
-    public obterPosicao(indice: number): PosicaoVisitada {
-        return this.posicoes[indice];
+    public obterPosicao(
+        x: number,
+        y: number
+    ): PosicaoVisitada | null {
+        for (
+            let indice = 0;
+            indice < this.quantidadePosicoes;
+            indice++
+        ) {
+            if (
+                this.posicoes[indice].posicao.x === x &&
+                this.posicoes[indice].posicao.y === y
+            ) {
+                return this.posicoes[indice];
+            }
+        }
+
+        return null;
     }
 
     public obterQuantidade(): number {

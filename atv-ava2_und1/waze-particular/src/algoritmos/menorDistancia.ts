@@ -1,192 +1,412 @@
-import type { Mapa } from "../estruturas/mapa";
-import type { PontoMapa } from "../tipos/pontoMapa";
-import type { NivelTransito } from "../tipos/conexao";
+import type { TabuleiroMapa } from "../estruturas/tabuleiroMapa";
+import type { Posicao } from "../tipos/posicao";
 
 export class MenorDistancia {
     public calcular(
-        mapa: Mapa,
-        origem: PontoMapa,
-        destino: PontoMapa
-    ): PontoMapa[] {
-        const quantidadePontos = mapa.obterQuantidadePontos();
+        tabuleiro: TabuleiroMapa,
+        origem: Posicao,
+        destino: Posicao
+    ): Posicao[] {
+        const quantidadeCelulas =
+            tabuleiro.obterLargura() *
+            tabuleiro.obterAltura();
 
         const distancias: number[] = [];
-        const visitados: boolean[] = [];
-        const pontosAnteriores: PontoMapa[] = [];
+        const visitadas: boolean[] = [];
+        const posicoesAnteriores: (Posicao | null)[] = [];
 
-        for (let indice = 0; indice < quantidadePontos; indice++) {
+        for (
+            let indice = 0;
+            indice < quantidadeCelulas;
+            indice++
+        ) {
             distancias[indice] = Infinity;
-            visitados[indice] = false;
-            pontosAnteriores[indice] = null as unknown as PontoMapa;
+            visitadas[indice] = false;
+            posicoesAnteriores[indice] = null;
         }
 
-        let indiceOrigem = -1;
-        let indiceDestino = -1;
+        const indiceOrigem =
+            this.obterIndice(
+                tabuleiro,
+                origem
+            );
 
-        for (let indice = 0; indice < quantidadePontos; indice++) {
-            const ponto = mapa.obterPonto(indice);
+        const indiceDestino =
+            this.obterIndice(
+                tabuleiro,
+                destino
+            );
 
-            if (ponto.id === origem.id) {
-                indiceOrigem = indice;
-            }
-
-            if (ponto.id === destino.id) {
-                indiceDestino = indice;
-            }
+        if (
+            indiceOrigem === -1 ||
+            indiceDestino === -1
+        ) {
+            return [];
         }
 
-        if (indiceOrigem === -1 || indiceDestino === -1) {
+        const celulaOrigem =
+            tabuleiro.obterCelula(
+                origem.x,
+                origem.y
+            );
+
+        const celulaDestino =
+            tabuleiro.obterCelula(
+                destino.x,
+                destino.y
+            );
+
+        if (
+            celulaOrigem === null ||
+            celulaDestino === null
+        ) {
+            return [];
+        }
+
+        if (
+            !celulaOrigem.transitavel ||
+            !celulaDestino.transitavel
+        ) {
             return [];
         }
 
         distancias[indiceOrigem] = 0;
 
-        for (let contador = 0; contador < quantidadePontos; contador++) {
+        for (
+            let contador = 0;
+            contador < quantidadeCelulas;
+            contador++
+        ) {
             let indiceMenorDistancia = -1;
             let menorDistancia = Infinity;
 
-            for (let indice = 0; indice < quantidadePontos; indice++) {
+            for (
+                let indice = 0;
+                indice < quantidadeCelulas;
+                indice++
+            ) {
                 if (
-                    !visitados[indice] &&
-                    distancias[indice] < menorDistancia
+                    !visitadas[indice] &&
+                    distancias[indice] <
+                        menorDistancia
                 ) {
-                    menorDistancia = distancias[indice];
-                    indiceMenorDistancia = indice;
+                    menorDistancia =
+                        distancias[indice];
+
+                    indiceMenorDistancia =
+                        indice;
                 }
             }
 
-            if (indiceMenorDistancia === -1) {
+            if (
+                indiceMenorDistancia === -1
+            ) {
                 break;
             }
 
-            visitados[indiceMenorDistancia] = true;
+            visitadas[indiceMenorDistancia] =
+                true;
 
-            if (indiceMenorDistancia === indiceDestino) {
+            if (
+                indiceMenorDistancia ===
+                indiceDestino
+            ) {
                 break;
             }
 
-            const pontoAtual = mapa.obterPonto(indiceMenorDistancia);
+            const posicaoAtual =
+                this.obterPosicaoPorIndice(
+                    tabuleiro,
+                    indiceMenorDistancia
+                );
+
+            const vizinhos =
+                this.obterVizinhos(
+                    tabuleiro,
+                    posicaoAtual
+                );
+
+            if (
+                posicaoAtual.x === 3 &&
+                posicaoAtual.y === 2
+            ) {
+                console.log(
+                    "Vizinhos da origem:",
+                    vizinhos
+                );
+            }
 
             for (
-                let indiceConexao = 0;
-                indiceConexao < mapa.obterQuantidadeConexoes();
-                indiceConexao++
+                let indiceVizinho = 0;
+                indiceVizinho < 4;
+                indiceVizinho++
             ) {
-                const conexao = mapa.obterConexao(indiceConexao);
+                const vizinho =
+                    vizinhos[indiceVizinho];
+
+                if (vizinho === null) {
+                    continue;
+                }
+
+                const indiceVizinhoTabuleiro =
+                    this.obterIndice(
+                        tabuleiro,
+                        vizinho
+                    );
 
                 if (
-                    conexao.origem.x !== pontoAtual.posicao.x ||
-                    conexao.origem.y !== pontoAtual.posicao.y
+                    indiceVizinhoTabuleiro === -1 ||
+                    visitadas[
+                        indiceVizinhoTabuleiro
+                    ]
                 ) {
                     continue;
                 }
 
-                const pontoVizinho = mapa.buscarPontoPorPosicao(
-                    conexao.destino.x,
-                    conexao.destino.y
-                );
+                const celulaVizinha =
+                    tabuleiro.obterCelula(
+                        vizinho.x,
+                        vizinho.y
+                    );
 
-                if (pontoVizinho === null) {
+                if (celulaVizinha === null) {
                     continue;
                 }
 
-                let indiceVizinho = -1;
+                const fatorTransito =
+                    this.obterFatorTransito(
+                        celulaVizinha.nivelTransito
+                    );
 
-                for (let indice = 0; indice < quantidadePontos; indice++) {
-                    const ponto = mapa.obterPonto(indice);
-
-                    if (ponto.id === pontoVizinho.id) {
-                        indiceVizinho = indice;
-                        break;
-                    }
+                if (
+                    celulaVizinha.nivelTransito === "intenso"
+                ) {
+                    
                 }
-
-                if (indiceVizinho === -1 || visitados[indiceVizinho]) {
-                    continue;
-                }
-
-                const fatorTransito = this.obterFatorTransito(
-                    conexao.nivelTransito
-                );
-
-                const custoConexao = conexao.distancia * fatorTransito;
 
                 const novaDistancia =
-                    distancias[indiceMenorDistancia] +
-                    custoConexao;
+                    distancias[
+                        indiceMenorDistancia
+                    ] + fatorTransito;
 
-                if (novaDistancia < distancias[indiceVizinho]) {
-                    distancias[indiceVizinho] = novaDistancia;
-                    pontosAnteriores[indiceVizinho] = pontoAtual;
+               if (
+                    novaDistancia <
+                    distancias[
+                        indiceVizinhoTabuleiro
+                    ]
+                ) {
+                    if (
+                        vizinho.y === 2 &&
+                        vizinho.x >= 3
+                    ) {
+                        
+                    }
+
+                    distancias[
+                        indiceVizinhoTabuleiro
+                    ] = novaDistancia;
+
+                    posicoesAnteriores[
+                        indiceVizinhoTabuleiro
+                    ] = posicaoAtual;
                 }
             }
         }
 
-        if (distancias[indiceDestino] === Infinity) {
+
+        if (
+            distancias[indiceDestino] ===
+            Infinity
+        ) {
             return [];
         }
 
-        const caminho: PontoMapa[] = [];
-        let indiceAtual = indiceDestino;
-        let quantidadeCaminho = 0;
-
-        while (indiceAtual !== indiceOrigem) {
-            const pontoAtual = mapa.obterPonto(indiceAtual);
-
-            caminho[quantidadeCaminho] = pontoAtual;
-            quantidadeCaminho++;
-
-            const pontoAnterior = pontosAnteriores[indiceAtual];
-
-            if (pontoAnterior === null) {
-                return [];
-            }
-
-            let indiceAnterior = -1;
-
-            for (let indice = 0; indice < quantidadePontos; indice++) {
-                const ponto = mapa.obterPonto(indice);
-
-                if (ponto.id === pontoAnterior.id) {
-                    indiceAnterior = indice;
-                    break;
-                }
-            }
-
-            if (indiceAnterior === -1) {
-                return [];
-            }
-
-            indiceAtual = indiceAnterior;
-        }
-
-        caminho[quantidadeCaminho] = origem;
-        quantidadeCaminho++;
-
-        let inicio = 0;
-        let fim = quantidadeCaminho - 1;
-
-        while (inicio < fim) {
-            const pontoTemporario = caminho[inicio];
-            caminho[inicio] = caminho[fim];
-            caminho[fim] = pontoTemporario;
-
-            inicio++;
-            fim--;
-        }
-
-        return caminho;
+        return this.reconstruirCaminho(
+            tabuleiro,
+            posicoesAnteriores,
+            origem,
+            destino
+        );
     }
 
-    private obterFatorTransito(nivelTransito: NivelTransito): number {
-        if (nivelTransito === "livre") {
-            return 1;
-        }
-
+    private obterFatorTransito(
+        nivelTransito:
+            "livre" |
+            "moderado" |
+            "intenso" |
+            null
+    ): number {
         if (nivelTransito === "moderado") {
-            return 1.5;
+            return 3;
         }
 
-        return 3;
+        if (nivelTransito === "intenso") {
+            return 10;
+        }
+
+        return 1;
+    }
+
+    private obterVizinhos(
+        tabuleiro: TabuleiroMapa,
+        posicao: Posicao
+    ): (Posicao | null)[] {
+        const vizinhos: (Posicao | null)[] = [
+            null,
+            null,
+            null,
+            null
+        ];
+
+        const deslocamentosX: number[] = [
+            0,
+            1,
+            0,
+            -1
+        ];
+
+        const deslocamentosY: number[] = [
+            -1,
+            0,
+            1,
+            0
+        ];
+
+        let quantidadeVizinhos = 0;
+
+        for (
+            let indice = 0;
+            indice < 4;
+            indice++
+        ) {
+            const x =
+                posicao.x +
+                deslocamentosX[indice];
+
+            const y =
+                posicao.y +
+                deslocamentosY[indice];
+
+            const celula =
+                tabuleiro.obterCelula(
+                    x,
+                    y
+                );
+
+            if (celula === null) {
+                continue;
+            }
+
+            if (!celula.transitavel) {
+                continue;
+            }
+
+            vizinhos[quantidadeVizinhos] = {
+                x: x,
+                y: y
+            };
+
+            quantidadeVizinhos++;
+        }
+
+        return vizinhos;
+    }
+
+    private obterIndice(
+        tabuleiro: TabuleiroMapa,
+        posicao: Posicao
+    ): number {
+        if (
+            posicao.x < 0 ||
+            posicao.x >= tabuleiro.obterLargura() ||
+            posicao.y < 0 ||
+            posicao.y >= tabuleiro.obterAltura()
+        ) {
+            return -1;
+        }
+
+        return (
+            posicao.y *
+            tabuleiro.obterLargura() +
+            posicao.x
+        );
+    }
+
+    private obterPosicaoPorIndice(
+        tabuleiro: TabuleiroMapa,
+        indice: number
+    ): Posicao {
+        const largura =
+            tabuleiro.obterLargura();
+
+        return {
+            x: indice % largura,
+            y: Math.floor(indice / largura)
+        };
+    }
+
+    private reconstruirCaminho(
+        tabuleiro: TabuleiroMapa,
+        posicoesAnteriores:
+            (Posicao | null)[],
+        origem: Posicao,
+        destino: Posicao
+    ): Posicao[] {
+        const caminho: Posicao[] = [];
+        let quantidadeCaminho = 0;
+
+        let posicaoAtual:
+            Posicao | null = destino;
+
+        while (posicaoAtual !== null) {
+            caminho[quantidadeCaminho] =
+                posicaoAtual;
+
+            quantidadeCaminho++;
+
+            if (
+                posicaoAtual.x === origem.x &&
+                posicaoAtual.y === origem.y
+            ) {
+                break;
+            }
+
+            const indice =
+                this.obterIndice(
+                    tabuleiro,
+                    posicaoAtual
+                );
+
+            if (indice === -1) {
+                return [];
+            }
+
+            posicaoAtual =
+                posicoesAnteriores[indice];
+        }
+
+        if (
+            quantidadeCaminho === 0 ||
+            posicaoAtual === null
+        ) {
+            return [];
+        }
+
+        const caminhoInvertido: Posicao[] = [];
+
+        for (
+            let indice = 0;
+            indice < quantidadeCaminho;
+            indice++
+        ) {
+            caminhoInvertido[indice] =
+                caminho[
+                    quantidadeCaminho -
+                    1 -
+                    indice
+                ];
+        }
+
+        return caminhoInvertido;
     }
 }

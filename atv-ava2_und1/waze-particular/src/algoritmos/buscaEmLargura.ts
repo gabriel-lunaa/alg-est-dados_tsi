@@ -1,154 +1,218 @@
-import type { Mapa } from "../estruturas/mapa";
-import type { PontoMapa } from "../tipos/pontoMapa";
 import { Fila } from "../estruturas/fila";
-import type { ElementoFila } from "../tipos/elementoFila";
 import { PosicoesVisitadas } from "../estruturas/posicoesVisitadas";
+import type { TabuleiroMapa } from "../estruturas/tabuleiroMapa";
+import type { Posicao } from "../tipos/posicao";
+import type { ElementoFila } from "../tipos/elementoFila";
 import type { PosicaoVisitada } from "../tipos/posicaoVisitada";
 
 export class BuscaEmLargura {
-    private mapa: Mapa;
-
-    public constructor(mapa: Mapa) {
-        this.mapa = mapa;
-    }
-
-    public buscar(origem: PontoMapa, destino: PontoMapa): PontoMapa[] {
+    public encontrarCaminho(
+        tabuleiro: TabuleiroMapa,
+        origem: Posicao,
+        destino: Posicao
+    ): Posicao[] {
         const fila = new Fila();
-        const posicoesVisitadas = new PosicoesVisitadas();
+        const posicoesVisitadas =
+            new PosicoesVisitadas();
 
-        const pontoOrigem = this.mapa.buscarPontoPorId(origem.id);
-        const pontoDestino = this.mapa.buscarPontoPorId(destino.id);
-
-        const caminho: PontoMapa[] = [];
-
-        if (pontoOrigem === null || pontoDestino === null) {
-            return caminho;
-        }
-
-        const elementoOrigem: ElementoFila = {
-            ponto: pontoOrigem
-        };
-
-        const posicaoOrigem: PosicaoVisitada = {
-            ponto: pontoOrigem,
+        const primeiraPosicao: PosicaoVisitada = {
+            posicao: origem,
             visitada: true,
-            pontoAnterior: null
+            posicaoAnterior: null
         };
 
-        fila.adicionar(elementoOrigem);
-        posicoesVisitadas.adicionar(posicaoOrigem);
+        posicoesVisitadas.adicionar(
+            primeiraPosicao
+        );
+
+        fila.adicionar({
+            posicao: origem
+        });
 
         while (!fila.estaVazia()) {
-            const elementoAtual = fila.remover();
+            const elementoAtual =
+                fila.remover();
 
             if (elementoAtual === null) {
                 break;
             }
 
-            const pontoAtual = elementoAtual.ponto;
+            const posicaoAtual =
+                elementoAtual.posicao;
 
-            if (pontoAtual.id === pontoDestino.id) {
-                let pontoCaminho: PontoMapa | null = pontoAtual;
-                let quantidadeCaminho = 0;
-
-                while (pontoCaminho !== null) {
-                    caminho[quantidadeCaminho] = pontoCaminho;
-                    quantidadeCaminho++;
-
-                    const posicaoAtual = this.obterPosicaoVisitada(
-                        posicoesVisitadas,
-                        pontoCaminho.id
-                    );
-
-                    if (posicaoAtual === null) {
-                        pontoCaminho = null;
-                    } else {
-                        pontoCaminho = posicaoAtual.pontoAnterior;
-                    }
-                }
-
-                this.inverterCaminho(caminho, quantidadeCaminho);
-
-                return caminho;
+            if (
+                posicaoAtual.x === destino.x &&
+                posicaoAtual.y === destino.y
+            ) {
+                return this.reconstruirCaminho(
+                    posicoesVisitadas,
+                    origem,
+                    destino
+                );
             }
+
+            const vizinhos =
+                this.obterVizinhos(
+                    tabuleiro,
+                    posicaoAtual
+                );
 
             for (
-                let indiceConexao = 0;
-                indiceConexao < this.mapa.obterQuantidadeConexoes();
-                indiceConexao++
+                let indice = 0;
+                indice < 4;
+                indice++
             ) {
-                const conexao = this.mapa.obterConexao(indiceConexao);
+                const vizinho =
+                    vizinhos[indice];
+
+                if (vizinho === null) {
+                    continue;
+                }
 
                 if (
-                    conexao.origem.x === pontoAtual.posicao.x &&
-                    conexao.origem.y === pontoAtual.posicao.y
+                    posicoesVisitadas.estaVisitado(
+                        vizinho.x,
+                        vizinho.y
+                    )
                 ) {
-                    const pontoVizinho = this.mapa.buscarPontoPorPosicao(
-                        conexao.destino.x,
-                        conexao.destino.y
-                    );
-
-                    if (pontoVizinho !== null) {
-                        const jaFoiVisitado =
-                            posicoesVisitadas.estaVisitado(pontoVizinho.id);
-
-                        if (!jaFoiVisitado) {
-                            const posicaoVisitada: PosicaoVisitada = {
-                                ponto: pontoVizinho,
-                                visitada: true,
-                                pontoAnterior: pontoAtual
-                            };
-
-                            posicoesVisitadas.adicionar(posicaoVisitada);
-
-                            const elementoFila: ElementoFila = {
-                                ponto: pontoVizinho
-                            };
-
-                            fila.adicionar(elementoFila);
-                        }
-                    }
+                    continue;
                 }
+
+                const posicaoVisitada: PosicaoVisitada = {
+                    posicao: vizinho,
+                    visitada: true,
+                    posicaoAnterior: posicaoAtual
+                };
+
+                posicoesVisitadas.adicionar(
+                    posicaoVisitada
+                );
+
+                const novoElemento: ElementoFila = {
+                    posicao: vizinho
+                };
+
+                fila.adicionar(novoElemento);
             }
         }
 
-        return caminho;
+        return [];
     }
 
-    private obterPosicaoVisitada(
-        posicoesVisitadas: PosicoesVisitadas,
-        idPonto: number
-    ): PosicaoVisitada | null {
+    private obterVizinhos(
+        tabuleiro: TabuleiroMapa,
+        posicao: Posicao
+    ): (Posicao | null)[] {
+        const vizinhos: (Posicao | null)[] = [
+            null,
+            null,
+            null,
+            null
+        ];
+
+        const deslocamentosX: number[] = [
+            0,
+            1,
+            0,
+            -1
+        ];
+
+        const deslocamentosY: number[] = [
+            -1,
+            0,
+            1,
+            0
+        ];
+
+        let quantidadeVizinhos = 0;
+
         for (
             let indice = 0;
-            indice < posicoesVisitadas.obterQuantidade();
+            indice < 4;
             indice++
         ) {
-            const posicaoVisitada =
-                posicoesVisitadas.obterPosicao(indice);
+            const x =
+                posicao.x +
+                deslocamentosX[indice];
 
-            if (posicaoVisitada.ponto.id === idPonto) {
-                return posicaoVisitada;
+            const y =
+                posicao.y +
+                deslocamentosY[indice];
+
+            const celula =
+                tabuleiro.obterCelula(x, y);
+
+            if (celula === null) {
+                continue;
             }
+
+            if (!celula.transitavel) {
+                continue;
+            }
+
+            vizinhos[quantidadeVizinhos] = {
+                x: x,
+                y: y
+            };
+
+            quantidadeVizinhos++;
         }
 
-        return null;
+        return vizinhos;
     }
 
-    private inverterCaminho(
-        caminho: PontoMapa[],
-        quantidadeCaminho: number
-    ): void {
-        let inicio = 0;
-        let fim = quantidadeCaminho - 1;
+    private reconstruirCaminho(
+        posicoesVisitadas: PosicoesVisitadas,
+        origem: Posicao,
+        destino: Posicao
+    ): Posicao[] {
+        const caminho: Posicao[] = [];
+        let quantidadeCaminho = 0;
 
-        while (inicio < fim) {
-            const pontoTemporario = caminho[inicio];
-            caminho[inicio] = caminho[fim];
-            caminho[fim] = pontoTemporario;
+        let posicaoAtual: Posicao | null = destino;
 
-            inicio++;
-            fim--;
+        while (posicaoAtual !== null) {
+            caminho[quantidadeCaminho] =
+                posicaoAtual;
+
+            quantidadeCaminho++;
+
+            if (
+                posicaoAtual.x === origem.x &&
+                posicaoAtual.y === origem.y
+            ) {
+                break;
+            }
+
+            const posicaoVisitada =
+                posicoesVisitadas.obterPosicao(
+                    posicaoAtual.x,
+                    posicaoAtual.y
+                );
+
+            if (posicaoVisitada === null) {
+                return [];
+            }
+
+            posicaoAtual =
+                posicaoVisitada.posicaoAnterior;
         }
+
+        const caminhoInvertido: Posicao[] = [];
+
+        for (
+            let indice = 0;
+            indice < quantidadeCaminho;
+            indice++
+        ) {
+            caminhoInvertido[indice] =
+                caminho[
+                    quantidadeCaminho -
+                    1 -
+                    indice
+                ];
+        }
+
+        return caminhoInvertido;
     }
 }

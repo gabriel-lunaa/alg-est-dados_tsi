@@ -1,4 +1,154 @@
+import { criarMapaDemonstracao } from "./mapas/mapaDemonstracao";
+import { MenorDistancia } from "./algoritmos/menorDistancia";
+import { GeradorTransitoAleatorio } from "./algoritmos/geradorTransitoAleatorio";
+import { criarTabuleiroVisual } from "./componentes/tabuleiroMapa";
+import { BuscaEmLargura } from "./algoritmos/buscaEmLargura";
+import { MenuLateral } from "./componentes/menuLateral";
+import { EditorCidade } from "./componentes/editorCidade";
+import { TabuleiroMapa } from "./estruturas/tabuleiroMapa";
+import type { CelulaMapa } from "./tipos/celulaMapa";
+import type { Posicao } from "./tipos/posicao";
 import "./style.css";
+
+const mapa = criarMapaDemonstracao();
+
+const tabuleiro = mapa.obterTabuleiro();
+
+if (tabuleiro !== null) {
+    const buscaEmLargura =
+        new BuscaEmLargura();
+
+    const caminho =
+        buscaEmLargura.encontrarCaminho(
+            tabuleiro,
+            {
+                x: 3,
+                y: 2
+            },
+            {
+                x: 14,
+                y: 10
+            }
+        );
+
+    console.log(
+        "Caminho encontrado pela BFS:",
+        caminho
+    );
+}
+
+if (tabuleiro === null) {
+    console.error("Tabuleiro do mapa não encontrado.");
+}
+
+const origem = mapa.buscarPontoPorId(1);
+const destino = mapa.buscarPontoPorId(4);
+
+if (origem === null || destino === null) {
+    console.error("Origem ou destino não encontrados no mapa.");
+}
+
+const posicaoOrigem: Posicao = {
+    x: 3,
+    y: 2
+};
+
+const posicaoDestino: Posicao = {
+    x: 14,
+    y: 10
+};
+
+let origemSelecionada: Posicao | null = null;
+let destinoSelecionado: Posicao | null = null;
+
+function selecionarCelula(
+    x: number,
+    y: number
+): void {
+    if (tabuleiro === null) {
+        return;
+    }
+
+    const celula =
+        tabuleiro.obterCelula(x, y);
+
+    if (celula === null) {
+        return;
+    }
+
+    if (!celula.transitavel) {
+        return;
+    }
+
+    if (origemSelecionada === null) {
+        origemSelecionada = {
+            x: x,
+            y: y
+        };
+
+        console.log(
+            "Origem selecionada:",
+            origemSelecionada
+        );
+    } else if (destinoSelecionado === null) {
+        destinoSelecionado = {
+            x: x,
+            y: y
+        };
+
+        console.log(
+            "Destino selecionado:",
+            destinoSelecionado
+        );
+    } else {
+        return;
+    }
+
+    atualizarTabuleiroVisual();
+}
+
+function atualizarTabuleiroVisual(): void {
+    if (
+        tabuleiro === null ||
+        areaTabuleiro === null
+    ) {
+        return;
+    }
+
+    areaTabuleiro.innerHTML = "";
+
+    elementoTabuleiro =
+        criarTabuleiroVisual(
+            tabuleiro,
+            [],
+            origemSelecionada,
+            destinoSelecionado,
+            selecionarCelula
+        );
+
+    areaTabuleiro.appendChild(
+        elementoTabuleiro
+    );
+
+    menuLateral.iniciar(
+        areaTabuleiro,
+        tratarOpcaoMenu
+    );
+}
+
+let elementoTabuleiro:
+    HTMLDivElement | null = null;
+
+if (tabuleiro !== null) {
+    elementoTabuleiro =
+        criarTabuleiroVisual(
+            tabuleiro,
+            [],
+            null,
+            null,
+            selecionarCelula
+        );
+}
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <main class="min-h-screen bg-slate-100 text-slate-900">
@@ -12,120 +162,100 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                 </p>
             </div>
 
-            <button
-                id="botao-tema"
-                class="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 text-xl shadow-lg backdrop-blur transition hover:scale-105"
-                aria-label="Alternar tema"
-            >
-                ☀️
-            </button>
         </header>
 
-        <section class="relative min-h-screen overflow-hidden">
-            <div class="absolute inset-0 bg-slate-200">
-                <div class="absolute inset-0 opacity-40"
-                    style="
-                        background-image:
-                            linear-gradient(to right, #cbd5e1 1px, transparent 1px),
-                            linear-gradient(to bottom, #cbd5e1 1px, transparent 1px);
-                        background-size: 70px 70px;
-                    ">
-                </div>
+<<section class="flex min-h-screen items-center justify-center overflow-hidden px-6 pb-8 pt-28">
+    <div class="flex w-full max-w-7xl items-center justify-center gap-8">
 
-                <div class="absolute left-[12%] top-[18%] h-3 w-3 rounded-full bg-slate-400"></div>
-                <div class="absolute left-[32%] top-[38%] h-3 w-3 rounded-full bg-slate-400"></div>
-                <div class="absolute left-[68%] top-[27%] h-3 w-3 rounded-full bg-slate-400"></div>
-                <div class="absolute left-[78%] top-[63%] h-3 w-3 rounded-full bg-slate-400"></div>
+    <div
+        id="area-tabuleiro"
+        class="relative flex aspect-[4/3] w-full max-w-5xl items-center justify-center overflow-hidden rounded-3xl bg-[#fdfbd4] shadow-xl"
+    ></div>
 
-                <div class="absolute left-[15%] top-[55%] h-1 w-[70%] rotate-[-8deg] rounded-full bg-white shadow-sm"></div>
-                <div class="absolute left-[25%] top-[30%] h-1 w-[55%] rotate-[28deg] rounded-full bg-white shadow-sm"></div>
-                <div class="absolute left-[8%] top-[70%] h-1 w-[60%] rotate-[12deg] rounded-full bg-white shadow-sm"></div>
+    <div class="w-80 shrink-0">
+        <div class="rounded-3xl bg-white/95 p-5 shadow-2xl backdrop-blur">
+            <div class="mb-5">
+                <h2 class="text-lg font-bold text-slate-900">
+                    Planeje sua rota
+                </h2>
 
-                <div class="absolute left-[20%] top-[42%] h-1.5 w-[50%] rotate-[-20deg] rounded-full bg-slate-300"></div>
+                <p class="mt-1 text-sm text-slate-500">
+                    Escolha onde você está e para onde deseja ir.
+                </p>
             </div>
 
-            <div class="absolute left-5 top-28 z-10 w-[calc(100%-2.5rem)] max-w-sm">
-                <div class="rounded-3xl bg-white/95 p-5 shadow-2xl backdrop-blur">
-                    <div class="mb-5">
-                        <h2 class="text-lg font-bold text-slate-900">
-                            Planeje sua rota
-                        </h2>
-                        <p class="mt-1 text-sm text-slate-500">
-                            Escolha onde você está e para onde deseja ir.
+            <div class="space-y-3">
+                <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    
+
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Origem
+                        </p>
+
+                        <p class="truncate text-sm font-semibold text-slate-700">
+                            Praça Central
                         </p>
                     </div>
+                </div>
 
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                ●
-                            </div>
+                <div class="ml-7 h-4 border-l-2 border-dashed border-slate-300"></div>
 
-                            <div class="min-w-0">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                    Origem
-                                </p>
-                                <p class="truncate text-sm font-semibold text-slate-700">
-                                    Praça Central
-                                </p>
-                            </div>
-                        </div>
 
-                        <div class="ml-7 h-4 border-l-2 border-dashed border-slate-300"></div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Destino
+                        </p>
 
-                        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
-                                ●
-                            </div>
-
-                            <div class="min-w-0">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                    Destino
-                                </p>
-                                <p class="truncate text-sm font-semibold text-slate-700">
-                                    Hospital
-                                </p>
-                            </div>
-                        </div>
+                        <p class="truncate text-sm font-semibold text-slate-700">
+                            Hospital
+                        </p>
                     </div>
-
-                    <button
-                        id="botao-calcular-rota"
-                        class="mt-5 w-full rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:bg-blue-700 active:translate-y-0"
-                    >
-                        Calcular rota
-                    </button>
                 </div>
             </div>
 
-            <div class="absolute bottom-6 left-1/2 z-10 w-[calc(100%-2.5rem)] max-w-md -translate-x-1/2">
-                <div class="rounded-3xl bg-white/95 p-5 shadow-2xl backdrop-blur">
+            <button
+                id="botao-calcular-rota"
+                class="mt-5 w-full rounded-2xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:bg-blue-700 active:translate-y-0"
+            >
+                Calcular rota
+            </button>
+        </div>
+    </div>
+
+</div>
+
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                Melhor rota
+                            <p 
                             </p>
-                            <p class="mt-1 text-2xl font-bold text-slate-900">
-                                2,4 km
+                            <p 
                             </p>
                         </div>
 
                         <div class="h-10 w-px bg-slate-200"></div>
 
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                Tempo estimado
+                            <p 
                             </p>
-                            <p class="mt-1 text-2xl font-bold text-slate-900">
-                                6 min
+                            <p 
                             </p>
                         </div>
                     </div>
 
                     <div class="mt-4 flex items-center gap-2 text-sm text-slate-500">
-                        <span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
-                        Rota mais curta encontrada
+                        <span
+                            
+                        ></span>
+
+                        <span id="texto-rota"></span>
                     </div>
+
+                    <p
+                        
+                    >
+                        
+                    </p>
                 </div>
             </div>
 
@@ -133,16 +263,429 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                 <span class="text-sm">A</span>
             </div>
 
-            <div class="absolute right-[24%] top-[57%] z-10 flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white shadow-lg ring-4 ring-white">
-                <span class="text-sm">B</span>
-            </div>
+            
         </section>
     </main>
 `;
 
+const areaTabuleiro =
+    document.querySelector<HTMLDivElement>("#area-tabuleiro");
+
+const menuLateral =
+    new MenuLateral();
+
+function mostrarMenuInicial(): void {
+    if (areaTabuleiro === null) {
+        return;
+    }
+
+    areaTabuleiro.innerHTML = "";
+
+    if (elementoTabuleiro !== null) {
+        areaTabuleiro.appendChild(
+            elementoTabuleiro
+        );
+    }
+
+    menuLateral.iniciar(
+        areaTabuleiro,
+        tratarOpcaoMenu
+    );
+}
+
+function criarNovoMapa(): void {
+    if (areaTabuleiro === null) {
+        return;
+    }
+
+    areaTabuleiro.innerHTML = "";
+
+    const novoTabuleiro =
+        new TabuleiroMapa(
+            16,
+            12
+        );
+
+    const editorCidade =
+        new EditorCidade();
+
+    editorCidade.iniciar(
+        novoTabuleiro,
+        areaTabuleiro
+    );
+
+    menuLateral.iniciar(
+        areaTabuleiro,
+        tratarOpcaoMenu
+    );
+}
+
+function abrirMapaSalvo(
+    nomeMapa: string
+): void {
+    if (areaTabuleiro === null) {
+        return;
+    }
+
+    const mapasSalvosTexto =
+        localStorage.getItem(
+            "waze-particular-mapas"
+        );
+
+    if (mapasSalvosTexto === null) {
+        return;
+    }
+
+    const mapasSalvos:
+        {
+            nome: string;
+            largura: number;
+            altura: number;
+            celulas: CelulaMapa[];
+        }[] = JSON.parse(
+            mapasSalvosTexto
+        );
+
+    let mapaEncontrado:
+        {
+            nome: string;
+            largura: number;
+            altura: number;
+            celulas: CelulaMapa[];
+        } | null = null;
+
+    for (
+        let indice = 0;
+        indice < mapasSalvos.length;
+        indice++
+    ) {
+        if (
+            mapasSalvos[indice].nome ===
+            nomeMapa
+        ) {
+            mapaEncontrado =
+                mapasSalvos[indice];
+
+            break;
+        }
+    }
+
+    if (mapaEncontrado === null) {
+        return;
+    }
+
+    const tabuleiro =
+        new TabuleiroMapa(
+            mapaEncontrado.largura,
+            mapaEncontrado.altura
+        );
+
+    tabuleiro.carregarCelulas(
+        mapaEncontrado.celulas
+    );
+
+    areaTabuleiro.innerHTML = "";
+
+    const elementoTabuleiro =
+        criarTabuleiroVisual(
+            tabuleiro
+        );
+
+    areaTabuleiro.appendChild(
+        elementoTabuleiro
+    );
+
+    menuLateral.iniciar(
+        areaTabuleiro,
+        tratarOpcaoMenu
+    );
+}
+
+function selecionarMapa(): void {
+    if (areaTabuleiro === null) {
+        return;
+    }
+
+    areaTabuleiro.innerHTML = "";
+
+    const painel =
+        document.createElement("div");
+
+    painel.className =
+        "absolute inset-0 overflow-auto bg-blue-50 p-6";
+
+    const mapasSalvosTexto =
+        localStorage.getItem(
+            "waze-particular-mapas"
+        );
+
+    let mapasSalvos:
+        {
+            nome: string;
+            largura: number;
+            altura: number;
+        }[] = [];
+
+    if (mapasSalvosTexto !== null) {
+        mapasSalvos =
+            JSON.parse(
+                mapasSalvosTexto
+            );
+    }
+
+    const conteudo =
+        document.createElement("div");
+
+    conteudo.className =
+        "mx-auto w-full max-w-2xl";
+
+    const titulo =
+        document.createElement("h2");
+
+    titulo.className =
+        "text-2xl font-bold text-slate-900";
+
+    titulo.textContent =
+        "Selecionar mapa";
+
+    conteudo.appendChild(
+        titulo
+    );
+
+    const descricao =
+        document.createElement("p");
+
+    descricao.className =
+        "mt-2 text-sm text-slate-500";
+
+    descricao.textContent =
+        "Escolha uma cidade para abrir o mapa.";
+
+    conteudo.appendChild(
+        descricao
+    );
+
+    if (mapasSalvos.length === 0) {
+        const mensagem =
+            document.createElement("div");
+
+        mensagem.className =
+            "mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm";
+
+        mensagem.innerHTML = `
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-3xl">
+                🗺️
+            </div>
+
+            <p class="mt-5 text-sm font-semibold text-slate-600">
+                Nenhum mapa salvo ainda.
+            </p>
+
+            <p class="mt-1 text-xs text-slate-400">
+                Crie um novo mapa para ele aparecer aqui.
+            </p>
+        `;
+
+        conteudo.appendChild(
+            mensagem
+        );
+    }
+
+    if (mapasSalvos.length > 0) {
+        const lista =
+            document.createElement("div");
+
+        lista.className =
+            "mt-6 space-y-3";
+
+        for (
+            let indice = 0;
+            indice < mapasSalvos.length;
+            indice++
+        ) {
+            const mapa =
+                mapasSalvos[indice];
+
+            const botao =
+                document.createElement("button");
+
+            botao.type = "button";
+
+            botao.className =
+                "flex w-full items-center justify-between rounded-3xl bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg";
+
+            botao.innerHTML = `
+                <div>
+                    <p class="font-bold text-slate-900">
+                        ${mapa.nome}
+                    </p>
+
+                    <p class="mt-1 text-xs text-slate-400">
+                        ${mapa.largura} × ${mapa.altura} quadrinhos
+                    </p>
+                </div>
+
+                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                    →
+                </span>
+            `;
+
+            botao.addEventListener(
+                "click",
+                () => {
+                    abrirMapaSalvo(
+                        mapa.nome
+                    );
+                }
+            );
+
+            lista.appendChild(
+                botao
+            );
+        }
+
+        conteudo.appendChild(
+            lista
+        );
+    }
+
+    painel.appendChild(
+        conteudo
+    );
+
+    areaTabuleiro.appendChild(
+        painel
+    );
+
+    menuLateral.iniciar(
+        areaTabuleiro,
+        tratarOpcaoMenu
+    );
+}
+
+function tratarOpcaoMenu(
+    opcao: string
+): void {
+    if (opcao === "inicio") {
+        mostrarMenuInicial();
+
+        return;
+    }
+
+    if (opcao === "novoMapa") {
+        criarNovoMapa();
+
+        return;
+    }
+
+    if (opcao === "selecionarMapa") {
+        selecionarMapa();
+    }
+}
+
+menuLateral.iniciar(
+    areaTabuleiro!,
+    tratarOpcaoMenu
+);
+
+if (areaTabuleiro !== null && elementoTabuleiro !== null) {
+    areaTabuleiro.appendChild(elementoTabuleiro);
+}
+
 const botaoCalcularRota =
     document.querySelector<HTMLButtonElement>("#botao-calcular-rota");
 
+const textoRota =
+    document.querySelector<HTMLSpanElement>("#texto-rota");
+
+const textoTransito =
+    document.querySelector<HTMLParagraphElement>("#texto-transito");
+
+const indicadorTransito =
+    document.querySelector<HTMLSpanElement>("#indicador-transito");
+
 botaoCalcularRota?.addEventListener("click", () => {
-    console.log("Cálculo de rota solicitado.");
+    if (tabuleiro === null) {
+        console.error(
+            "O tabuleiro não foi carregado."
+        );
+
+        return;
+    }
+
+    const geradorTransito =
+        new GeradorTransitoAleatorio();
+
+    geradorTransito.gerar(tabuleiro);
+
+    const menorDistancia =
+        new MenorDistancia();
+
+    if (
+        origemSelecionada === null ||
+        destinoSelecionado === null
+    ) {
+        alert(
+            "Selecione uma origem e um destino no mapa."
+        );
+
+        return;
+    }
+
+    const caminho =
+        menorDistancia.calcular(
+            tabuleiro,
+            origemSelecionada,
+            destinoSelecionado
+        );
+
+   console.log(
+        "Caminho encontrado pelo Dijkstra:",
+        caminho
+    );
+
+    if (caminho.length === 0) {
+        console.error(
+            "Nenhum caminho foi encontrado."
+        );
+
+        if (textoRota !== null) {
+            textoRota.textContent =
+                "Nenhum caminho encontrado.";
+        }
+
+        return;
+    }
+
+    if (areaTabuleiro !== null) {
+        areaTabuleiro.innerHTML = "";
+
+        const novoTabuleiro =
+            criarTabuleiroVisual(
+                tabuleiro,
+                caminho,
+                posicaoOrigem,
+                posicaoDestino
+            );
+
+        areaTabuleiro.appendChild(
+            novoTabuleiro
+        );
+    }
+
+    if (textoRota !== null) {
+        textoRota.textContent =
+            caminho.length +
+            " células no caminho";
+    }
+
+    if (indicadorTransito !== null) {
+        indicadorTransito.textContent =
+            "Calculado";
+    }
+
+    if (textoTransito !== null) {
+        textoTransito.textContent =
+            "Rota encontrada considerando o trânsito.";
+    }
 });

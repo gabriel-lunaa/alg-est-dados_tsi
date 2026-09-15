@@ -1,5 +1,5 @@
-import type { PontoMapa } from "./pontoMapa";
+import type { Posicao } from "./posicao";
 
 export interface ElementoFila {
-    ponto: PontoMapa;
+    posicao: Posicao;
 }
